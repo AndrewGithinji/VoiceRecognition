@@ -1,56 +1,47 @@
 import { Component, OnInit } from '@angular/core';
 
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
 @Component({
   selector: 'app-voice-recognition',
   templateUrl: './voice-recognition.component.html',
   styleUrls: ['./voice-recognition.component.css']
 })
 export class VoiceRecognitionComponent implements OnInit {
+  p(p: any) {
+    throw new Error('Method not implemented.');
+  }
   texts!: HTMLElement;
-  recognition!: SpeechRecognition;
-  p!: HTMLElement;
+  recognition!: any; // Use 'any' type for recognition
 
   ngOnInit() {
-    this.texts = document.querySelector('.texts') as HTMLElement;
-    window.SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    this.recognition = new SpeechRecognition();
+    this.texts = document.querySelector('.texts')!;
+    this.recognition = new ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)();
     this.recognition.interimResults = true;
-    this.p = document.createElement('p');
 
-    this.recognition.addEventListener('result', (e: any) => {
-      this.texts.appendChild(this.p);
+    this.recognition.onresult = (e: any) => {
       const text = Array.from(e.results)
         .map((result: any) => result[0])
         .map((result: any) => result.transcript)
         .join('');
 
-      this.p.innerText = text;
+      const p = document.createElement('p');
+      this.texts.appendChild(p);
+      p.innerText = text;
+
       if (e.results[0].isFinal) {
         if (text.includes('How are You')) {
-          this.p = document.createElement('p');
-          this.p.classList.add('replay');
-          this.p.innerText = 'I am fine';
-          this.texts.appendChild(this.p);
+          const replayP = document.createElement('p');
+          replayP.classList.add('replay');
+          replayP.innerText = 'I am fine';
+          this.texts.appendChild(replayP);
         }
 
         // Handle other recognized phrases and generate responses
-
-        this.p = document.createElement('p');
       }
-    });
+    };
 
-    this.recognition.addEventListener('end', () => {
+    this.recognition.onend = () => {
       this.recognition.start();
-    });
+    };
 
     this.recognition.start();
   }
